@@ -1,38 +1,37 @@
-#include "Header.h"
+#include "FacilityLocation.h"
 
-int main() {
+
+template <typename T>
+void print_contents(T a, T b);
+
+int main(int argc, char **argv) {
 	FacilityLocation fl = FacilityLocation();
-	unsigned int * connection_cost = fl.get_connection_cost();
-	unsigned int * opening_cost = fl.get_opening_cost();
+	//unsigned int (*connection_cost)[NUM_OF_C]= fl.get_connection_cost();
 
-	bool ba = true;
-	ba += 1;
-	cout << ba << endl;
-
-	for (int i = 0; i < NUM_OF_F; ++i) {
-		cout << "y[" << i << "]: " << opening_cost[i] << endl;
-	}
-	for (int i = 0; i < NUM_OF_F; ++i) {
-		for (int j = 0; j < NUM_OF_C; ++j) {
-			cout << "x[" << i << "," << j << "]: " << connection_cost[i*NUM_OF_C + j] << endl;
-		}
-	}
+	/* LP solver sovle the relaxed problem */
 	double sol = fl.LP_solve();
 	cout << "The obj val of relaxation : " << sol << endl;
-	fl.brute_force();
-	bool* optimal_connection_table = fl.get_optimal_connection_table();
-	bool* optimal_opening_table = fl.get_optimal_opening_table();
-	for (int i = 0; i < NUM_OF_F; ++i) {
-		cout << "y[" << i << "]: " << optimal_opening_table[i] << endl;
-	}
-	for (int i = 0; i < NUM_OF_F; ++i) {
-		for (int j = 0; j < NUM_OF_C; ++j) {
-			cout << "x[" << i << "," << j << "]: " << optimal_connection_table[i*NUM_OF_C + j] << endl;
-		}
-	}
+	cout << endl;
 
-	cout << "The obj val of brute-force alg : " << fl.get_optimal_cost() << endl;
+	/* Find rounded solution */
 	fl.round();
 	cout << "The obj val of rounding alg : " << fl.get_rounded_cost() << endl;
 
+}
+
+template <typename T>
+void print_contents(T a, T b)
+{
+	for (int i = 0; i < NUM_OF_F; ++i) {
+		cout << "y[" << i << "]: " << a[i] << endl;
+	}
+
+	cout << endl;
+	for (int i = 0; i < NUM_OF_F; ++i) {
+		for (int j = 0; j < NUM_OF_C; ++j) {
+			cout << "x[" << i << "," << j << "]: " << b[i*NUM_OF_C + j] << ' ';
+			printf("%x\n", b[i*NUM_OF_C + j]);
+		}
+	}
+	cout << endl;
 }

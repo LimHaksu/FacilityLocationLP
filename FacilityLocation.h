@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <iostream>
 #include <cstdlib>
 #include <ilcplex/ilocplex.h>
@@ -9,11 +9,14 @@
 #include <ctime>        // std::time
 #include <cstdlib>      // std::rand, std::srand
 #include <math.h>
+#include <numeric>		// std::iota
+#include <float.h>
 using namespace std;
 
-#define NUM_OF_F 100
+#define NUM_OF_F 10
 #define NUM_OF_C 100
-
+#define OPENING_COST_MAX 100
+#define CONNECTION_COST_MAX 100
 class FacilityLocation {
 private:
 	/* Rounded problem's objective function's cost */
@@ -22,51 +25,92 @@ private:
 	/* Original problem's objective function's optimal cost */
 	double optimal_cost;
 
+	
 	/* Input of LP-solver */
-	double opening_cost[NUM_OF_F];
-	double connection_cost[NUM_OF_C * NUM_OF_F];
+	//double opening_cost[NUM_OF_F];
+	//double connection_cost[NUM_OF_F][NUM_OF_C];
 
 	/* output of LP-solver */
-	double opening_variable[NUM_OF_F];
-	double connection_variable[NUM_OF_C * NUM_OF_F];
+	//double opening_variable[NUM_OF_F];
+	//double connection_variable[NUM_OF_F][NUM_OF_C];
 
 	/* exponential clocks of facilities */
-	double exponential_clock[NUM_OF_F];
+	//double exponential_clock[NUM_OF_F][NUM_OF_C];
 
 	/* the order of the exponential clocks of the clients by ascending */
-	int clock_of_client[NUM_OF_C];
+	//int clock_of_client[NUM_OF_C];
+
+	/* Preprocessing */
+	//double copied_opening_cost[NUM_OF_F][NUM_OF_C];  // f'
+	//double copied_connection_cost[NUM_OF_F][NUM_OF_C][NUM_OF_C];  // d'
+	//double copied_opening_variable[NUM_OF_F][NUM_OF_C];  // y'
+	//double copied_connection_variable[NUM_OF_F][NUM_OF_C][NUM_OF_C];  // x'
+	//bool copied_opening_table[NUM_OF_F][NUM_OF_C];  // M
+	//bool copied_connection_table[NUM_OF_F][NUM_OF_C][NUM_OF_C];  // M'
 
 	/* output of Rounding Algorithm */
-	bool opening_table[NUM_OF_F];
-	bool connection_table[NUM_OF_C * NUM_OF_F];
+	//bool opening_table[NUM_OF_F];
+	//bool connection_table[NUM_OF_F][NUM_OF_C];
 
 	/* output of Brute-force Algorithm */
-	bool optimal_opening_table[NUM_OF_F];
-	bool optimal_connection_table[NUM_OF_C * NUM_OF_F];
+	//bool optimal_opening_table[NUM_OF_F];
+	//bool optimal_connection_table[NUM_OF_F][NUM_OF_C];
+
+	/* ---------------dynamic allocation version--------------------- */
+	/* Input of LP-solver */
+	double *opening_cost; // [NUM_OF_F] check
+	double **connection_cost; //[NUM_OF_F][NUM_OF_C]; check
+
+	/* output of LP-solver */
+	double* opening_variable; //[NUM_OF_F]; check
+	double** connection_variable; // [NUM_OF_F][NUM_OF_C]; check
+
+	/* exponential clocks of facilities */
+	double** exponential_clock; // [NUM_OF_F][NUM_OF_C];  check
+
+	/* the order of the exponential clocks of the clients by ascending */
+	int* clock_of_client; // [NUM_OF_C];   check
+
+	/* Preprocessing */
+	double** copied_opening_cost; // [NUM_OF_F][NUM_OF_C];  // f' check
+	double*** copied_connection_cost; // [NUM_OF_F][NUM_OF_C][NUM_OF_C];  // d' check
+	double** copied_opening_variable; // [NUM_OF_F][NUM_OF_C];  // y' check
+	double*** copied_connection_variable; // [NUM_OF_F][NUM_OF_C][NUM_OF_C];  // x' check
+	bool** copied_opening_table; // [NUM_OF_F][NUM_OF_C];  // M check
+	bool*** copied_connection_table; // [NUM_OF_F][NUM_OF_C][NUM_OF_C];  // M' check
+
+																 /* output of Rounding Algorithm */
+	bool* opening_table; // [NUM_OF_F]; // check
+	bool** connection_table; // [NUM_OF_F][NUM_OF_C]; check
+
+	/* output of Brute-force Algorithm */
+	bool* optimal_opening_table; // [NUM_OF_F]; check
+	bool** optimal_connection_table; // [NUM_OF_F][NUM_OF_C]; check
+
 
 public:
 	/* constructor, inside it initialize the oppening cost, connection cost, clients' clocks, facilities' clocks */
-	// ÇÐ¼ö
+	// ï¿½Ð¼ï¿½
 	FacilityLocation();
 
 	/* solve the LP-relaxed facility location problem */
-	// ¸íÀå
+	// ï¿½ï¿½ï¿½ï¿½
 	double LP_solve();
 
 	/* round the LP-relaxed solution to the original problem's solution */
-	// À¯¹Î
+	// ï¿½ï¿½ï¿½ï¿½
 	void round();
 
 	/* check all possible solutions and pick the minimum cost (brute-force) */
-	// À¯¹Î
+	// ï¿½ï¿½ï¿½ï¿½
 	void brute_force();
 
 	friend void calculate_func(bool *connection_table, FacilityLocation *fcl, double *min);
 
 	/* compare LP rounded solution and optimal solution */
-	// ¸íÀå
+	// ï¿½ï¿½ï¿½ï¿½
 	double objective(bool optimal = 0);
-	
+
 	double get_optimal_cost() {
 		return this->optimal_cost;
 	}
@@ -74,8 +118,8 @@ public:
 	double get_rounded_cost() {
 		return this->rounded_cost;
 	}
-
-	double * get_connection_cost() {
+	
+	double ** get_connection_cost(){
 		return this->connection_cost;
 	}
 
@@ -83,7 +127,7 @@ public:
 		return this->opening_cost;
 	}
 
-	bool * get_optimal_connection_table() {
+	bool ** get_optimal_connection_table(){
 		return this->optimal_connection_table;
 	}
 
@@ -95,7 +139,7 @@ public:
 		return this->opening_variable;
 	}
 
-	double * get_connection_variable() {
+	double ** get_connection_variable(){
 		return this->connection_variable;
 	}
 
@@ -103,47 +147,22 @@ public:
 		return this->opening_table;
 	}
 
-	bool * get_connection_table() {
+	bool ** get_connection_table(){
 		return this->connection_table;
 	}
 
-	double * get_exponential_clock() {
+	double ** get_exponential_clock() {
 		return this->exponential_clock;
 	}
 
 	int * get_clock_of_client() {
 		return this->clock_of_client;
 	}
+
+	void set_connection_cost_between_Fi_and_Cj(int i, int j);
+
+	/* get costs from j to jp ; j, jp : client, ip : facility */
+	double get_distance(int j, int jp, int ip);
 };
 
-class Facility {
-private:
-	int x, y;
-
-public:
-	bool operator==(Facility _f) {
-		if (this->get_x() == _f.get_x() && this->get_y() == _f.get_y()) return true;
-		else return false;
-	}
-	int get_x() {return x;}
-	int get_y() {return y;}
-	void set_x(int _x) { x = _x; }
-	void set_y(int _y) { y = _y; }
-};
-
-class Client{
-private:
-	int x, y;
-
-public:
-	bool operator==(Client _c) {
-		if (this->get_x() == _c.get_x() && this->get_y() == _c.get_y())	return true;
-		else return false;
-	}
-	int get_x() { return x; }
-	int get_y() { return y; }
-	void set_x(int _x) { x = _x; }
-	void set_y(int _y) { y = _y; }
-
-	
-};
+int CompareDoubleAbsolute(double x, double y, double absTolerance = (1.0e-8));
